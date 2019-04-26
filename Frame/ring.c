@@ -10,103 +10,72 @@
 /* Private function prototypes------------------------------------------------*/
 /* Function implementation ---------------------------------------------------*/
 /**
-  * @brief  Create a ring
-  * @param  size : size of the ring
-  * @retval pointer point to the ring
-  */
-Ring_t* Ring_Create(uint16_t size)
-{
-  Ring_t *ring = (Ring_t*)calloc(1, sizeof(Ring_t));
-  uint8_t *buffer = (uint8_t*)calloc(size, sizeof(uint8_t));
-  ring->buf = buffer;
-  ring->size = size;
-  ring->rp = 0;
-  ring->wp = 0;
-  return ring;
-}
-
-/**
-  * @brief  Delete a ring
-  * @param  ring : the ring would be deleted
+  * @brief  Reset members of the ring
+  * @param  Ring pointer
   * @retval None
   */
-void Ring_Delete(Ring_t* ring)
+void Ring_Reset(Ring_t *ring)
 {
-  free(ring->buf);
-  free(ring);
+  ring->tail = 0;
+  ring->head = 0;
+	ring->vars.byteCount = 0;
+	ring->vars.checksum = 0;
+	ring->vars.commandID = 0;
+	ring->vars.commandReceived = 0;
+	ring->vars.payloadLen = 0;
+	ring->vars.timeTick = 0;
+	ring->vars.state = WAIT_START_BYTE;
 }
 
 /**
-  * @brief  Get one byte from a certain ring
-  * @param  ring : point to the ring
-  * @param  state : get byte state
-  * @retval value
+  * @brief  Get the oldest byte from ring.
+  * @param  ring: ring pointer
+  * @param  value: get byte result
+  * @retval state
   */
-uint8_t Ring_GetByte(Ring_t *ring, ResultState_t *state)
+ResultState_t Ring_GetByte(Ring_t *ring, uint8_t *value)
 {
-  uint8_t ret = 0;
-  if((ring == NULL) || (state == NULL))
-    return ret;
-  if(Ring_GetLen(ring) != 0)
+  if((ring == NULL) || (value == NULL))
+    return STATE_ERROR;
+  if(!Ring_IsEmpty(ring))
   {
-    ret = ring->buf[ring->rp];
-    ring->rp++;
-    if(ring->rp == ring->size)
-      ring->rp = 0;
+    *value = ring->buf[ring->tail];
+    ring->tail++;
+    if(ring->tail == RING_BUFFER_SIZE)
+      ring->tail = 0;
     
-    *state = STATE_OK;
+    return STATE_OK;
   }
-  else
-  {
-    *state = STATE_ERROR;
-  }
-  return ret;
+
+  return STATE_ERROR;
 }
 
 /**
   * @brief  Write one byte to a certain ring
-  * @param  ring : point to the ring
+  * @param  ring : ring pointer
+  * @param  val : value written
   * @retval None
   */
 void Ring_WriteByte(Ring_t *ring, uint8_t val)
 {
   if(ring == NULL)
     return;
-  ring->buf[ring->wp] = val;
-  ring->wp++;
-  if(ring->wp == ring->size)
-    ring->wp = 0;
+  ring->buf[ring->head] = val;
+  ring->head++;
+  if(ring->head == RING_BUFFER_SIZE)
+    ring->head = 0;
 }
 
 /**
-  * @brief  Clean a certain ring
+  * @brief  check if a ring empty or not
   * @param  ring : point to the ring
-  * @retval None
+  * @retval true: empty, false: not empty
   */
-void Ring_Clean(Ring_t *ring)
+bool Ring_IsEmpty(Ring_t *ring)
 {
   if(ring == NULL)
-    return;
-  ring->rp = 0;
-  ring->wp = 0;
-  memset(ring->buf, 0, ring->size);
-}
+    return true;
 
-/**
-  * @brief  Get the number of byte waiting to read
-  * @param  ring : point to the ring
-  * @retval return value
-  */
-uint16_t Ring_GetLen(Ring_t *ring)
-{
-  if(ring == NULL)
-    return 0;
-  int16_t len = 0;
-  len = ring->wp - ring->rp;
-  if(len < 0)
-  {
-    len += ring->size;
-  }
-  return (uint16_t)len;
+  return (ring->head != ring->tail) ? false : true;
 }
 /*****************************END OF FILE**************************************/

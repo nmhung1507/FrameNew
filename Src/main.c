@@ -46,7 +46,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
-#include "frame_app.h"
+#include "frame_parser.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,12 +79,13 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t rx_data;
-Ring_t *ring = NULL;
+Ring_t ring;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if(huart->Instance == USART1)
 	{
-		Ring_WriteByte(ring, rx_data);
+		Ring_WriteByte(&ring, rx_data);
+		printf("%c", rx_data);
 		HAL_UART_Receive_IT(&huart1, &rx_data, 1);
 	}
 }
@@ -122,15 +123,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart1, &rx_data, 1);
   printf("Start ");
-	ring = Frame_Init();
-	Frame_Send(1, (uint8_t*)"DATA", 4);
+	Ring_Reset(&ring);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		Frame_Receive(ring);
+		Frame_Parse(&ring);
+		HAL_Delay(190);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

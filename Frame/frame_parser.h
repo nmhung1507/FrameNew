@@ -7,8 +7,9 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stdint.h"
 #include "ring.h"
+
+/* Exported define -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
@@ -16,13 +17,18 @@ extern "C" {
 /**
   * @brief  Parse data from a ring.
   * @param  ring : pointer point to the ring
-  * @param  cmdId : command ID if parse success
-  * @param  data : payload if parse success
-  * @param  dataSize : data size if parse success
-  * @retval PARSE_OK : parse success, PARSE_ERROR : not success
+  * @retval None
   */
-ResultState_t Frame_Parse(Ring_t *ring, uint8_t *cmdId, 
-                                        uint8_t *data, uint16_t *dataSize);
+void Frame_Parse(Ring_t *ring);
+
+/**
+  * @brief  Packet and send a frame
+  * @param  cmdID : command ID
+  * @param  data : data buffer
+  * @param  len : data lenght
+  * @retval None
+  */
+void Frame_Send(uint8_t cmdID, uint8_t *data, uint8_t len);
 
 #ifdef __cplusplus
 }
